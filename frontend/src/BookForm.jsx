@@ -1,32 +1,112 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from './api'; // Import the authenticated axios instance
 
-function BookForm({ onBookAdded, api }) {
+function BookForm() {
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
-    const [price, setPrice] = useState(0);
+    const [price, setPrice] = useState('');
+    const [copies, setCopies] = useState(10);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const newBook = {
+            title,
+            author,
+            price: parseFloat(price),
+            copies: parseInt(copies)
+        };
+
         try {
-            const res = await api.post('/books', { title, author, price, copies: 10 });
-            alert("Book Saved!");
-            onBookAdded(res.data);
-            setTitle(''); setAuthor(''); setPrice(0);
+            // Use the centralized 'api' instance that has the JWT interceptor
+            await api.post('/books', newBook);
+
+            alert("Book Saved Successfully!");
+
+            // Navigate back to the inventory list
+            // Because App.jsx fetches on load, the new book will appear there
+            navigate('/inventory');
         } catch (err) {
-            alert("Save failed.");
+            console.error("Save Error:", err.response?.data || err.message);
+            alert("Failed to save book. Check the console for details.");
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="form-style">
-            <h3>Add New Book</h3>
-            <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            <input type="text" placeholder="Author" value={author} onChange={(e) => setAuthor(e.target.value)} required />
-            <input type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} required />
-            <button type="submit">Save Book</button>
-        </form>
+        <div style={{ padding: '20px', maxWidth: '400px', margin: '0 auto' }}>
+            <h2>Add New Book</h2>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div>
+                    <label>Title:</label><br/>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                        style={{ width: '100%' }}
+                    />
+                </div>
+
+                <div>
+                    <label>Author:</label><br/>
+                    <input
+                        type="text"
+                        value={author}
+                        onChange={(e) => setAuthor(e.target.value)}
+                        required
+                        style={{ width: '100%' }}
+                    />
+                </div>
+
+                <div>
+                    <label>Price:</label><br/>
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        required
+                        style={{ width: '100%' }}
+                    />
+                </div>
+
+                <div>
+                    <label>Initial Copies:</label><br/>
+                    <input
+                        type="number"
+                        value={copies}
+                        onChange={(e) => setCopies(e.target.value)}
+                        required
+                        style={{ width: '100%' }}
+                    />
+                </div>
+
+                <button type="submit" style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    padding: '10px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                }}>
+                    Save to Database
+                </button>
+
+                <button type="button" onClick={() => navigate('/inventory')} style={{
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    padding: '10px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                }}>
+                    Cancel
+                </button>
+            </form>
+        </div>
     );
 }
 
 export default BookForm;
-
